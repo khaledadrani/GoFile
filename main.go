@@ -2,141 +2,63 @@ package main
 
 import (
 	"fmt"
-	"io"
-
-	// "net/http"
-	"os"
+	"net/http"
+	// "time"
 )
 
-type bot interface {
-	getMessage() string
-	speak(string) string
-}
+func checkStatus(url string, c chan string) {
+	result, err := http.Get(url)
 
-type EnglishBot struct {
-	helloMessage string
-	language     string
-}
+	if err != nil {
+		fmt.Println(url + " might be down!")
+		c <- url
+		return
+	}
 
-type FrenchBot struct {
-	helloMessage string
-	language     string
-}
+	fmt.Println(url + " OK!")
+	c <- url
 
-func (b EnglishBot) getMessage() string {
-	b.helloMessage = "Hello"
-	return b.helloMessage
-}
-
-func (b FrenchBot) getMessage() string {
-	b.helloMessage = "Bonjour"
-	return b.helloMessage
-}
-
-func printMessage(b bot) {
-	fmt.Println(b.getMessage())
-}
-
-func (b FrenchBot) speak(message string) string {
-	return b.getMessage() + message
-}
-
-type logWriter struct{}
-
-func (logWriter) Write(bs []byte) (int, error) {
-	fmt.Println(string(bs))
-	fmt.Println("Just wrote this many bytes: ", len(bs))
-	return len(bs), nil
-}
-
-type triangle struct {
-	height float64
-	base   float64
-}
-
-type square struct {
-	sideLength float64
-}
-
-type shape interface {
-	getArea() float64
-}
-
-func (t triangle) getArea() float64 {
-	return t.base * t.height * 0.5
-}
-
-func (s square) getArea() float64 {
-	return s.sideLength * s.sideLength
-}
-
-func printArea(s shape) {
-	surface := s.getArea()
-	fmt.Println("Surface ", surface)
-
+	defer result.Body.Close()
 }
 
 func main() {
 
-	filePath := ""
+	// websites := []string{
+	// 	"http://google.com",
+	// 	"http://facebook.com",
+	// 	"http://stackoverflow.com",
+	// 	"http://golang.com",
+	// }
 
-	if len(os.Args) > 1 {
-		fmt.Println(os.Args)
-		filePath = os.Args[1]
-	} else {
-		fmt.Println("No file was provided")
-		os.Exit(1)
+	// c := make(chan string)
+
+	// for _, url := range websites {
+	// 	go checkStatus(url, c)
+	// }
+
+	// for i := 0; i < len(websites); i++ {
+	// 	go checkStatus(<-c, c)
+	// }
+
+	// for l := range c {
+	// 	go func(l string) {
+	// 		time.Sleep(6 * time.Second)
+	// 		checkStatus(l, c)
+	// 	}(l)
+	// }
+
+	c := make(chan string)
+
+	for i := 0; i < 4; i++ {
+		go printString("Hello there!", c)
 	}
 
-	fileData, err := os.Open(filePath)
-
-	if err != nil {
-		fmt.Println("Error ", err)
-		os.Exit(1)
+	for {
+		fmt.Println(<-c)
 	}
+}
 
-	io.Copy(os.Stdout, fileData)
-
-	defer fileData.Close()
-
-	// s := square{
-	// 	sideLength: 10.0,
-	// }
-
-	// t := triangle{
-	// 	height: 10.0,
-	// 	base:   5.5,
-	// }
-
-	// printArea(s)
-	// printArea(t)
-
-	// resp, err := http.Get("http://google.com")
-
-	// if err != nil {
-	// 	fmt.Println("Error: ", err)
-	// 	os.Exit(1)
-	// }
-
-	// bs := make([]byte, 9999)
-
-	// resp.Body.Read(bs)
-
-	// fmt.Println(string(bs))
-
-	// lw := logWriter{}
-
-	// io.Copy(lw, resp.Body)
-
-	// defer resp.Body.Close()
-
-	// body, err := io.ReadAll(resp.Body)
-
-	// if err != nil {
-	// 	fmt.Println("Error while getting body: ", err)
-	// 	os.Exit(1)
-	// }
-
-	// fmt.Println(body)
-
+func printString(s string, c chan string) {
+	fmt.Println(s)
+	c <- "Done printing."
 }
